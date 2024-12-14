@@ -1,39 +1,47 @@
-"use client";
+const Hero = async () => {
+  const fetchVerse = async () => {
+    const NEXT_PUBLIC_BASE_URL =
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const response = await fetch(`${NEXT_PUBLIC_BASE_URL}/api/quran/random`);
 
-import { useEffect, useState } from "react";
+    if (!response.ok) {
+      throw new Error("Failed to fetch verse");
+    }
 
-const Hero = () => {
-  const [verse, setVerse] = useState(null);
+    const data = await response.json();
 
-  useEffect(() => {
-    // Fetch a random verse from AlQuran API
-    fetch("https://api.alquran.cloud/v1/ayah/random/en.asad")
-      .then((response) => response.json())
-      .then((data) => {
-        setVerse({
-          text: data.data.text,
-          surah: data.data.surah.englishName,
-          ayahNumber: data.data.numberInSurah,
-        });
-      })
-      .catch((error) => console.error("Error fetching verse:", error));
-  }, []);
+    return data;
+  };
+
+  const verse = await fetchVerse();
 
   return (
     <section
-      className="relative bg-cover bg-center h-[80vh] flex items-center justify-center text-center text-background"
+      className="relative w-full bg-cover bg-center h-[80vh] flex items-center justify-center text-center text-background"
       style={{
         backgroundImage:
           "url('https://unsplash.com/photos/dri5ZiEWQWw/download?ixid=M3wxMjA3fDB8MXxzZWFyY2h8NHx8bW91c3F1ZXxlbnwwfHx8fDE3MzQwMzQ3NzR8MA&force=true&w=2400')",
       }}
     >
-      <div className="bg-black bg-opacity-50 p-8 rounded-lg max-w-2xl">
+      <div className="bg-black flex items-center flex-col bg-opacity-60 p-8 rounded-lg max-w-6xl w-full text-white">
         {verse ? (
           <>
-            <h1 className="text-4xl font-bold mb-4">“{verse.text}”</h1>
-            <p className="text-lg mb-6">
+            <h1 className="text-xl font-bold mb-4">“{verse.english}”</h1>
+            <p className="text-lg mb-4">
+              <strong></strong> <span>{verse.arabic}</span>
+            </p>
+            <p className="text-md mb-4">
+              <strong></strong> <span>{verse.bangla}</span>
+            </p>
+            <p className="text-sm mb-6">
               Surah {verse.surah} - Ayah {verse.ayahNumber}
             </p>
+            <div className="mb-6 flex justify-center">
+              <audio controls>
+                <source src={verse.audio} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
             <a
               href="/quran"
               className="bg-accent text-background px-6 py-3 rounded-lg hover:bg-secondary transition"

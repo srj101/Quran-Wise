@@ -14,11 +14,11 @@ export default function WhyQuranIsTheBestBook() {
       </div>
       <div className="md:w-1/2">
         <Image
-          src="https://images.pexels.com/photos/7249294/pexels-photo-7249294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+          src="https://unsplash.com/photos/sfmsMZ7ezXw/download?ixid=M3wxMjA3fDB8MXxzZWFyY2h8M3x8cXVyYW58ZW58MHx8fHwxNzM0MTc1NTc0fDA&force=true&w=2400"
           alt="Why Quran is the Best Book"
-          width={500}
+          width={1000}
           height={250}
-          className="rounded-lg shadow-md object-contain w-full max-h-96"
+          className="rounded-lg shadow-md max-h-96"
         />
       </div>
     </div>

@@ -13,8 +13,9 @@ export default function RootLayout({ children }) {
       <body>
         <Navbar />
         {/* Flex container for sidebar and main content */}
-        <div className="flex relative">
-          <main className="container mx-auto py-4">{children}</main>
+
+        <div className="flex mx-auto w-full container">
+          <main className="w-full py-4">{children}</main>
         </div>
       </body>
     </html>
