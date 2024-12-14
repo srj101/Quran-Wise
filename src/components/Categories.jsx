@@ -82,7 +82,7 @@ const categories = [
 
 const Categories = () => {
   return (
-    <section className="py-16 bg-background text-text">
+    <section className="py-16 bg-background text-text px-4">
       <div className="container mx-auto text-center">
         <h2 className="text-3xl font-bold mb-8">
           Explore Solutions from the Quran
