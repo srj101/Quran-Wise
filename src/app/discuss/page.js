@@ -31,7 +31,7 @@ export default function CoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+    <div className="min-h-screen  flex items-center justify-center px-4">
       <div className="bg-white shadow-lg rounded-lg p-6 max-w-3xl w-full">
         <h1 className="text-2xl font-bold text-center text-primary mb-4">
           📖 Discuss Quran-Wise

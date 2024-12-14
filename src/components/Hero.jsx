@@ -13,7 +13,7 @@ const Hero = () => {
         const NEXT_PUBLIC_BASE_URL =
           process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
         const response = await fetch(
-          `${NEXT_PUBLIC_BASE_URL}/api/quran/random`
+          `${NEXT_PUBLIC_BASE_URL}/api/quran/random/`
         );
 
         if (!response.ok) {
