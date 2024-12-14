@@ -13,14 +13,10 @@ const Navbar = () => {
               Quran
             </Link>
           </li>
+
           <li>
-            <Link href="/problems" className="hover:text-accent transition">
-              Problems
-            </Link>
-          </li>
-          <li>
-            <Link href="/courses" className="hover:text-accent transition">
-              Courses
+            <Link href="/widgets" className="hover:text-accent transition">
+              Widgets
             </Link>
           </li>
           <li>
