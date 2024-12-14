@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 
 // Define the GET handler
-export async function GET(request) {
+export async function GET(request, res) {
   try {
     // Generate a random number between 1 and 6236 (total ayahs in Quran)
     const randomNum = Math.floor(Math.random() * 6236) + 1;
@@ -45,7 +45,7 @@ export async function GET(request) {
     };
 
     // Return the JSON response using NextResponse for better integration with Next.js
-    return NextResponse.json(data, { status: 200 });
+    return Response.json({ data });
   } catch (error) {
     // Handle any unexpected errors gracefully
     return NextResponse.json(

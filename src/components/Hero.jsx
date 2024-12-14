@@ -26,10 +26,10 @@ const Hero = async () => {
       <div className="bg-black flex items-center flex-col bg-opacity-60 p-8 rounded-lg max-w-6xl w-full text-white">
         {verse ? (
           <>
-            <h1 className="text-xl font-bold mb-4">“{verse.english}”</h1>
             <p className="text-lg mb-4">
               <strong></strong> <span>{verse.arabic}</span>
             </p>
+            <h3 className="text-xl font-bold mb-4">“{verse.english}”</h3>
             <p className="text-md mb-4">
               <strong></strong> <span>{verse.bangla}</span>
             </p>
