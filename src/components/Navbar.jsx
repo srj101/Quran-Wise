@@ -13,6 +13,17 @@ const Navbar = () => {
               Quran
             </Link>
           </li>
+          <li>
+            <Link
+              href="/tools"
+              className="text-amber-200 hover:text-white font-semibold transition flex items-center gap-1.5"
+            >
+              <span>Tools</span>
+              <span className="text-[10px] bg-amber-600/70 text-white px-1.5 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                Studio
+              </span>
+            </Link>
+          </li>
 
           <li>
             <Link href="/widgets" className="hover:text-accent transition">

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Sidebar from "@/components/SurahDetails/Sidebar";
 import MainContent from "@/components/SurahDetails/MainContent";
 import axios from "axios";
+import { SURAHS_LIST } from "@/data/surahList";
 
 export default async function SurahPage({ params }) {
   const { surah } = await params;
@@ -33,11 +34,21 @@ export default async function SurahPage({ params }) {
   const getChapters = async () => {
     try {
       const url = "https://quranapi.pages.dev/api/surah.json";
-      const response = await axios.get(url);
-      return response.data;
+      const response = await axios.get(url, { timeout: 3000 });
+      if (response.data && Array.isArray(response.data)) {
+        return response.data;
+      }
     } catch (error) {
-      console.error("Request failed", error);
+      console.warn("External surah list fetch failed, using fallback.");
     }
+    return SURAHS_LIST.map((s) => ({
+      surahNameArabic: s.arabic,
+      surahNameArabicLong: s.arabic,
+      surahName: s.name,
+      surahNameTranslation: s.english,
+      totalAyah: s.verses,
+      revelationPlace: s.revelation,
+    }));
   };
 
   const chapters = await getChapters();
