@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { SURAHS_LIST, QUICK_PRESETS } from "@/data/surahList";
 import { RECITERS } from "@/data/reciters";
 import { getSurahVerses } from "@/lib/quranApi";
+import JsonTimelineModal from "./JsonTimelineModal";
 
 export default function TimelineEditor({
   timeline = [],
@@ -14,8 +15,10 @@ export default function TimelineEditor({
   setGapSeconds,
   onGenerate,
   onAddToBatch,
+  onQueueBatchJob,
   isProcessing = false,
 }) {
+  const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
   const [selectedSurahId, setSelectedSurahId] = useState(1);
   const [surahSearch, setSurahSearch] = useState("");
   const [selectionMode, setSelectionMode] = useState("range"); // 'range' | 'single' | 'full' | 'custom'
@@ -315,9 +318,19 @@ export default function TimelineEditor({
 
           {/* Quick Presets */}
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-secondary block">
-              Quick Popular Presets:
-            </span>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-semibold text-secondary">
+                Quick Popular Presets:
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsJsonModalOpen(true)}
+                className="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1 bg-amber-100/70 hover:bg-amber-200/80 px-2.5 py-0.5 rounded-lg border border-amber-300 transition"
+              >
+                <span>{`{ }`}</span>
+                <span>Auto-Build from JSON</span>
+              </button>
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {QUICK_PRESETS.slice(0, 6).map((preset, idx) => (
                 <button
@@ -462,7 +475,17 @@ export default function TimelineEditor({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsJsonModalOpen(true)}
+              className="px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-50 text-amber-900 hover:bg-amber-100 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+              title="Import or Export JSON configuration"
+            >
+              <span className="font-mono">{`{ }`}</span>
+              <span>JSON Importer / Exporter</span>
+            </button>
+
             {timeline.length > 0 && (
               <button
                 type="button"
@@ -604,6 +627,17 @@ export default function TimelineEditor({
           </div>
         )}
       </div>
+
+      {/* JSON Importer / Exporter Modal */}
+      <JsonTimelineModal
+        isOpen={isJsonModalOpen}
+        onClose={() => setIsJsonModalOpen(false)}
+        timeline={timeline}
+        setTimeline={setTimeline}
+        selectedReciter={selectedReciter}
+        gapSeconds={gapSeconds}
+        onQueueBatchJob={onQueueBatchJob}
+      />
     </div>
   );
 }

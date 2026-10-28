@@ -326,6 +326,23 @@ export default function ToolsPage() {
           setGapSeconds={setGapSeconds}
           onGenerate={handleGenerateTimeline}
           onAddToBatch={handleAddToBatch}
+          onQueueBatchJob={(jobData) => {
+            const newJob = {
+              id: `job_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              name: jobData.name,
+              timeline: jobData.timeline,
+              reciterId: jobData.reciterId,
+              reciterName: jobData.reciterName,
+              gapSeconds: jobData.gapSeconds,
+              status: "idle",
+              progress: 0,
+              progressMessage: "",
+              error: null,
+              result: null,
+            };
+            setBatchJobs((prev) => [...prev, newJob]);
+            showToast(`✓ Added "${jobData.name}" to Batch Queue!`);
+          }}
           isProcessing={isProcessing}
         />
       )}
