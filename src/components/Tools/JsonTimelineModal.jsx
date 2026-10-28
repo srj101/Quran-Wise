@@ -233,6 +233,7 @@ export default function JsonTimelineModal({
             ayahNumber: ayah,
             arabic: verse.arabic,
             english: verse.english,
+            bengali: verse.bengali || "",
             candidateUrls: reciterObj.getUrl(seg.surahNum, ayah),
           });
         }
@@ -283,6 +284,7 @@ export default function JsonTimelineModal({
             ayahNumber: ayah,
             arabic: verse.arabic,
             english: verse.english,
+            bengali: verse.bengali || "",
             candidateUrls: reciterObj.getUrl(seg.surahNum, ayah),
           });
         }
@@ -555,3 +557,4 @@ export default function JsonTimelineModal({
     </div>
   );
 }
+

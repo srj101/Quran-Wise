@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import {
   generateArabicSrt,
   generateEnglishSrt,
+  generateBengaliSrt,
   generateBilingualSrt,
   downloadFile,
   downloadZipBundle,
@@ -71,9 +72,17 @@ export default function BatchQueue({
       if (res.audioBlob) {
         jobFolder.file(`${job.name}.wav`, res.audioBlob);
       }
-      jobFolder.file("subtitles_arabic.srt", generateArabicSrt(res.segments));
-      jobFolder.file("subtitles_english.srt", generateEnglishSrt(res.segments));
-      jobFolder.file("subtitles_bilingual.srt", generateBilingualSrt(res.segments));
+      jobFolder.file("subtitles_arabic_raw.srt", generateArabicSrt(res.segments));
+      jobFolder.file("subtitles_english_raw.srt", generateEnglishSrt(res.segments));
+      jobFolder.file("subtitles_bengali_raw.srt", generateBengaliSrt(res.segments));
+      jobFolder.file(
+        "subtitles_bilingual_ar_en.srt",
+        generateBilingualSrt(res.segments, { lang: "english", splitLongCues: true })
+      );
+      jobFolder.file(
+        "subtitles_bilingual_ar_bn.srt",
+        generateBilingualSrt(res.segments, { lang: "bengali", splitLongCues: true })
+      );
     }
 
     const blob = await masterZip.generateAsync({ type: "blob" });

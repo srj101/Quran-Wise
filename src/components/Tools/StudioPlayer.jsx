@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import WebGLWaveform from "./WebGLWaveform";
 import {
   generateArabicSrt,
   generateEnglishSrt,
+  generateBengaliSrt,
   generateBilingualSrt,
   downloadFile,
   downloadZipBundle,
@@ -24,7 +25,8 @@ export default function StudioPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [volume, setVolume] = useState(1);
-  const [subtitleMode, setSubtitleMode] = useState("bilingual"); // 'bilingual' | 'arabic' | 'english'
+  const [subtitleMode, setSubtitleMode] = useState("bilingual_en"); // 'bilingual_en' | 'bilingual_bn' | 'arabic' | 'english' | 'bengali'
+  const [splitLongCues, setSplitLongCues] = useState(true);
   const [copiedType, setCopiedType] = useState(null);
 
   // Synchronize audio playback time
@@ -87,9 +89,17 @@ export default function StudioPlayer({
 
   const copySrtToClipboard = (type) => {
     let text = "";
-    if (type === "arabic") text = generateArabicSrt(segments);
-    else if (type === "english") text = generateEnglishSrt(segments);
-    else text = generateBilingualSrt(segments);
+    if (type === "arabic") {
+      text = generateArabicSrt(segments, { splitLongCues });
+    } else if (type === "english") {
+      text = generateEnglishSrt(segments, { splitLongCues });
+    } else if (type === "bengali") {
+      text = generateBengaliSrt(segments, { splitLongCues });
+    } else if (type === "bilingual_bn") {
+      text = generateBilingualSrt(segments, { lang: "bengali", splitLongCues });
+    } else {
+      text = generateBilingualSrt(segments, { lang: "english", splitLongCues });
+    }
 
     navigator.clipboard.writeText(text);
     setCopiedType(type);
@@ -127,37 +137,63 @@ export default function StudioPlayer({
         </div>
 
         {/* Subtitle mode pills */}
-        <div className="flex items-center bg-secondary/50 rounded-lg p-1 text-xs">
+        <div className="flex flex-wrap items-center bg-secondary/50 rounded-xl p-1 text-xs gap-1">
           <button
-            onClick={() => setSubtitleMode("bilingual")}
-            className={`px-3 py-1 rounded-md transition ${
-              subtitleMode === "bilingual" ? "bg-background text-primary font-bold shadow" : "text-background/80 hover:text-white"
+            onClick={() => setSubtitleMode("bilingual_en")}
+            className={`px-2.5 py-1 rounded-lg transition ${
+              subtitleMode === "bilingual_en"
+                ? "bg-background text-primary font-bold shadow"
+                : "text-background/80 hover:text-white"
             }`}
           >
-            Bilingual (Ar + En)
+            Dual (Ar + En)
+          </button>
+          <button
+            onClick={() => setSubtitleMode("bilingual_bn")}
+            className={`px-2.5 py-1 rounded-lg transition ${
+              subtitleMode === "bilingual_bn"
+                ? "bg-background text-primary font-bold shadow"
+                : "text-background/80 hover:text-white"
+            }`}
+          >
+            Dual (Ar + বাংলা)
           </button>
           <button
             onClick={() => setSubtitleMode("arabic")}
-            className={`px-3 py-1 rounded-md transition ${
-              subtitleMode === "arabic" ? "bg-background text-primary font-bold shadow" : "text-background/80 hover:text-white"
+            className={`px-2.5 py-1 rounded-lg transition ${
+              subtitleMode === "arabic"
+                ? "bg-background text-primary font-bold shadow"
+                : "text-background/80 hover:text-white"
             }`}
           >
-            Arabic Only
+            عربي Only
           </button>
           <button
             onClick={() => setSubtitleMode("english")}
-            className={`px-3 py-1 rounded-md transition ${
-              subtitleMode === "english" ? "bg-background text-primary font-bold shadow" : "text-background/80 hover:text-white"
+            className={`px-2.5 py-1 rounded-lg transition ${
+              subtitleMode === "english"
+                ? "bg-background text-primary font-bold shadow"
+                : "text-background/80 hover:text-white"
             }`}
           >
             English Only
+          </button>
+          <button
+            onClick={() => setSubtitleMode("bengali")}
+            className={`px-2.5 py-1 rounded-lg transition ${
+              subtitleMode === "bengali"
+                ? "bg-background text-primary font-bold shadow"
+                : "text-background/80 hover:text-white"
+            }`}
+          >
+            বাংলা Only
           </button>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Live Synchronized Subtitles Display Box */}
-        <div className="relative min-h-[160px] bg-background/60 border border-accent/20 rounded-2xl p-6 flex flex-col justify-center items-center text-center shadow-inner">
+        <div className="relative min-h-[170px] bg-background/60 border border-accent/20 rounded-2xl p-6 flex flex-col justify-center items-center text-center shadow-inner">
           <div className="absolute top-3 left-4 text-xs font-semibold text-secondary/70">
             {activeSegment ? (
               <span>
@@ -174,7 +210,9 @@ export default function StudioPlayer({
 
           {activeSegment ? (
             <div className="space-y-4 max-w-3xl my-auto">
-              {(subtitleMode === "bilingual" || subtitleMode === "arabic") && (
+              {(subtitleMode === "bilingual_en" ||
+                subtitleMode === "bilingual_bn" ||
+                subtitleMode === "arabic") && (
                 <div
                   dir="rtl"
                   className="font-bold text-2xl md:text-3xl text-primary leading-loose font-serif select-text"
@@ -183,9 +221,15 @@ export default function StudioPlayer({
                 </div>
               )}
 
-              {(subtitleMode === "bilingual" || subtitleMode === "english") && (
+              {(subtitleMode === "bilingual_en" || subtitleMode === "english") && (
                 <div className="text-secondary text-base md:text-lg font-medium italic select-text">
                   "{activeSegment.english}"
+                </div>
+              )}
+
+              {(subtitleMode === "bilingual_bn" || subtitleMode === "bengali") && (
+                <div className="text-secondary text-base md:text-lg font-medium select-text">
+                  "{activeSegment.bengali || activeSegment.english}"
                 </div>
               )}
             </div>
@@ -295,6 +339,22 @@ export default function StudioPlayer({
           </div>
         </div>
 
+        {/* Subtitle Configuration Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-50/60 p-3.5 rounded-xl border border-amber-200 text-xs">
+          <label className="flex items-center gap-2 font-semibold text-primary cursor-pointer">
+            <input
+              type="checkbox"
+              checked={splitLongCues}
+              onChange={(e) => setSplitLongCues(e.target.checked)}
+              className="accent-primary w-4 h-4 rounded"
+            />
+            <span>Auto-divide long ayats into multiple lines & paced timed segments</span>
+          </label>
+          <span className="text-[11px] text-secondary/80">
+            Removes all numbers/headers & wraps text within standard screen width
+          </span>
+        </div>
+
         {/* Download & Export Center */}
         <div className="border-t border-secondary/15 pt-5">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -304,71 +364,115 @@ export default function StudioPlayer({
               </svg>
               Download & Export Center
             </h4>
-            <span className="text-xs text-secondary/80">Pristine 16-bit Lossless Audio & Accurate Subtitles</span>
+            <span className="text-xs text-secondary/80">
+              Pure Raw Text • Zero Numbers/Prefixes • Auto-Wrapped Lines
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {/* Download WAV */}
             <button
               onClick={() => downloadFile(audioBlob, `${jobName}.wav`, "audio/wav")}
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary text-background font-semibold text-xs hover:bg-secondary transition shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-primary text-background font-semibold text-xs hover:bg-secondary transition shadow-sm"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
               </svg>
               Audio (.wav)
             </button>
 
-            {/* Arabic SRT */}
+            {/* Arabic SRT (Raw) */}
             <button
               onClick={() =>
-                downloadFile(generateArabicSrt(segments), `${jobName}_Arabic.srt`)
+                downloadFile(
+                  generateArabicSrt(segments, { splitLongCues }),
+                  `${jobName}_Arabic_Raw.srt`
+                )
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-secondary/30 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-secondary/30 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              title="Pure raw Arabic text without any numbers"
             >
-              <span className="font-serif">ع</span>
-              Arabic SRT (.srt)
+              <span className="font-serif">عربي</span>
+              Arabic SRT
             </button>
 
-            {/* English SRT */}
+            {/* English SRT (Raw) */}
             <button
               onClick={() =>
-                downloadFile(generateEnglishSrt(segments), `${jobName}_English.srt`)
+                downloadFile(
+                  generateEnglishSrt(segments, { splitLongCues }),
+                  `${jobName}_English_Raw.srt`
+                )
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-secondary/30 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-secondary/30 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              title="Pure raw English translation without prefixes"
             >
               <span>EN</span>
-              English SRT (.srt)
+              English SRT
             </button>
 
-            {/* Bilingual SRT */}
+            {/* Bengali SRT (Raw) */}
             <button
               onClick={() =>
-                downloadFile(generateBilingualSrt(segments), `${jobName}_Bilingual.srt`)
+                downloadFile(
+                  generateBengaliSrt(segments, { splitLongCues }),
+                  `${jobName}_Bengali_Raw.srt`
+                )
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-accent/40 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-white border border-emerald-300 text-emerald-900 font-semibold text-xs hover:bg-emerald-50 transition shadow-sm"
+              title="Pure raw Bengali translation without prefixes"
             >
-              <span>Dual</span>
-              Bilingual SRT (.srt)
+              <span>বাংলা</span>
+              Bengali SRT
             </button>
 
-            {/* ZIP Package */}
+            {/* Bilingual (Ar + En) */}
+            <button
+              onClick={() =>
+                downloadFile(
+                  generateBilingualSrt(segments, { lang: "english", splitLongCues }),
+                  `${jobName}_Dual_En.srt`
+                )
+              }
+              className="flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl bg-white border border-amber-400 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              title="Bilingual: Arabic + English"
+            >
+              <span>Dual (Ar+En)</span>
+            </button>
+
+            {/* Bilingual (Ar + Bn) */}
+            <button
+              onClick={() =>
+                downloadFile(
+                  generateBilingualSrt(segments, { lang: "bengali", splitLongCues }),
+                  `${jobName}_Dual_Bn.srt`
+                )
+              }
+              className="flex items-center justify-center gap-1 px-2.5 py-2.5 rounded-xl bg-white border border-emerald-500 text-primary font-semibold text-xs hover:bg-background transition shadow-sm"
+              title="Bilingual: Arabic + Bengali"
+            >
+              <span>Dual (Ar+বাংলা)</span>
+            </button>
+          </div>
+
+          {/* Master ZIP download */}
+          <div className="mt-3 flex justify-end">
             <button
               onClick={() =>
                 downloadZipBundle({
-                  zipFilename: `${jobName}_Package.zip`,
+                  zipFilename: `${jobName}_Complete_Package.zip`,
                   audioBlob,
                   audioFilename: `${jobName}.wav`,
                   segments,
                   reciterName,
                 })
               }
-              className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold text-xs hover:from-amber-700 hover:to-amber-800 transition shadow-md"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold text-xs hover:from-amber-700 hover:to-amber-800 transition shadow-md flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
-              Download ZIP (All)
+              Download Complete Bundle (WAV + All 5 SRTs + VTT as ZIP)
             </button>
           </div>
 
@@ -379,21 +483,35 @@ export default function StudioPlayer({
               onClick={() => copySrtToClipboard("bilingual")}
               className="text-xs text-primary hover:underline font-medium"
             >
-              {copiedType === "bilingual" ? "✓ Copied Dual SRT!" : "Copy Dual SRT"}
+              {copiedType === "bilingual" ? "✓ Copied Ar+En!" : "Dual (Ar+En)"}
+            </button>
+            <span className="text-secondary/40">•</span>
+            <button
+              onClick={() => copySrtToClipboard("bilingual_bn")}
+              className="text-xs text-primary hover:underline font-medium"
+            >
+              {copiedType === "bilingual_bn" ? "✓ Copied Ar+বাংলা!" : "Dual (Ar+বাংলা)"}
             </button>
             <span className="text-secondary/40">•</span>
             <button
               onClick={() => copySrtToClipboard("arabic")}
               className="text-xs text-primary hover:underline font-medium"
             >
-              {copiedType === "arabic" ? "✓ Copied Arabic!" : "Copy Arabic SRT"}
+              {copiedType === "arabic" ? "✓ Copied Raw Arabic!" : "Raw Arabic"}
             </button>
             <span className="text-secondary/40">•</span>
             <button
               onClick={() => copySrtToClipboard("english")}
               className="text-xs text-primary hover:underline font-medium"
             >
-              {copiedType === "english" ? "✓ Copied English!" : "Copy English SRT"}
+              {copiedType === "english" ? "✓ Copied Raw English!" : "Raw English"}
+            </button>
+            <span className="text-secondary/40">•</span>
+            <button
+              onClick={() => copySrtToClipboard("bengali")}
+              className="text-xs text-primary hover:underline font-medium"
+            >
+              {copiedType === "bengali" ? "✓ Copied Raw Bengali!" : "Raw Bengali (বাংলা)"}
             </button>
           </div>
         </div>
@@ -433,7 +551,7 @@ export default function StudioPlayer({
                         {seg.surahName} ({seg.surahId}:{seg.ayahNumber})
                       </div>
                       <div className="text-[11px] text-secondary truncate max-w-md">
-                        {seg.english}
+                        {seg.bengali ? `${seg.bengali} • ` : ""}{seg.english}
                       </div>
                     </div>
                   </div>

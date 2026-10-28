@@ -120,6 +120,7 @@ export default function TimelineEditor({
           ayahNumber: ayahNum,
           arabic: verse.arabic,
           english: verse.english,
+          bengali: verse.bengali || "",
           candidateUrls: reciter.getUrl(selectedSurahId, ayahNum),
         };
       });

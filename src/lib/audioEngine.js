@@ -126,6 +126,7 @@ export async function renderTimelineAudio(timelineItems, options = {}) {
         ayahNumber: item.ayahNumber,
         arabic: item.arabic,
         english: item.english,
+        bengali: item.bengali || "",
         startTime: startSec,
         endTime: endSec,
         duration: durationSec,
