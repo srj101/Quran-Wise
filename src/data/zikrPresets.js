@@ -65,3 +65,4 @@ export const POPULAR_ZIKR_PRESETS = [
     recommendedRepeat: 100,
   },
 ];
+
