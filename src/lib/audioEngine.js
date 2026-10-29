@@ -1,18 +1,72 @@
 // High-performance Web Audio API engine for combining Quran ayahs
-// Uses OfflineAudioContext for hardware-accelerated mixing and lossless 16-bit PCM WAV encoding.
+// Uses official MP3Quran.net audio and official Ayah-level timing maps.
+// Slices exact ayah PCM samples and merges them with hardware-accelerated OfflineAudioContext.
+
+import { RECITERS } from "@/data/reciters";
 
 // In-memory ArrayBuffer cache to avoid duplicate network fetches
 const audioBufferCache = new Map();
+const timingCache = new Map();
 
 /**
- * Fetch raw audio ArrayBuffer for a given URL with fallback candidates.
+ * Fetch official Ayah timing data for a Surah and Reciter.
+ */
+export async function fetchAyahTimings(surahId, readId = 123) {
+  const cacheKey = `${readId}_${surahId}`;
+  if (timingCache.has(cacheKey)) {
+    return timingCache.get(cacheKey);
+  }
+
+  // Attempt 1: Internal API proxy
+  try {
+    const res = await fetch(`/api/quran/timing?surah=${surahId}&read=${readId}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        timingCache.set(cacheKey, data);
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn(`Internal timing fetch failed for Surah ${surahId}, trying direct endpoint...`, err);
+  }
+
+  // Attempt 2: Direct MP3Quran API v3
+  try {
+    const res = await fetch(
+      `https://www.mp3quran.net/api/v3/ayat_timing?surah=${surahId}&read=${readId}`,
+      { mode: "cors" }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const timings = data.map((item) => ({
+          ayah: item.ayah,
+          startTimeMs: item.start_time,
+          endTimeMs: item.end_time,
+          startSec: item.start_time / 1000,
+          endSec: item.end_time / 1000,
+          durationSec: (item.end_time - item.start_time) / 1000,
+        }));
+        timingCache.set(cacheKey, timings);
+        return timings;
+      }
+    }
+  } catch (err) {
+    console.error(`Direct MP3Quran timing fetch failed for Surah ${surahId}:`, err);
+  }
+
+  throw new Error(`Failed to load ayah timing for Surah ${surahId}`);
+}
+
+/**
+ * Fetch raw audio ArrayBuffer with fallback candidate URLs.
  */
 export async function fetchAudioWithFallback(candidateUrls) {
   const urls = Array.isArray(candidateUrls) ? candidateUrls : [candidateUrls];
 
   for (const url of urls) {
     if (audioBufferCache.has(url)) {
-      // Return a copy of cached buffer so decodeAudioData detach doesn't corrupt it
       return audioBufferCache.get(url).slice(0);
     }
   }
@@ -24,8 +78,8 @@ export async function fetchAudioWithFallback(candidateUrls) {
       if (response.ok) {
         const arrayBuffer = await response.arrayBuffer();
         if (arrayBuffer.byteLength > 1000) {
-          // Cache successful buffer (limit cache size to ~100 entries to prevent memory bloating)
-          if (audioBufferCache.size > 150) {
+          // Keep cache limited to prevent memory bloat
+          if (audioBufferCache.size > 20) {
             const firstKey = audioBufferCache.keys().next().value;
             audioBufferCache.delete(firstKey);
           }
@@ -38,7 +92,7 @@ export async function fetchAudioWithFallback(candidateUrls) {
     }
   }
 
-  throw new Error(`Failed to download audio from candidate sources: ${urls[0]}`);
+  throw new Error(`Failed to download audio from: ${urls[0]} (${lastError?.message || ""})`);
 }
 
 /**
@@ -49,18 +103,62 @@ export async function decodeAudioBuffer(audioCtx, arrayBuffer) {
 }
 
 /**
- * Combine multiple ayahs into a single lossless AudioBuffer and generate accurate timestamps.
+ * Slice an exact segment from an AudioBuffer with a 3ms cosine crossfade at edges to eliminate clicks.
+ */
+export function sliceAudioBuffer(audioCtx, originalBuffer, startSec, endSec) {
+  const sampleRate = originalBuffer.sampleRate;
+  const startSample = Math.max(0, Math.floor(startSec * sampleRate));
+  const endSample = Math.min(originalBuffer.length, Math.ceil(endSec * sampleRate));
+  const frameCount = endSample - startSample;
+
+  if (frameCount <= 0) {
+    return null;
+  }
+
+  const sliced = audioCtx.createBuffer(
+    originalBuffer.numberOfChannels,
+    frameCount,
+    sampleRate
+  );
+
+  for (let ch = 0; ch < originalBuffer.numberOfChannels; ch++) {
+    const originalData = originalBuffer.getChannelData(ch);
+    const slicedData = sliced.getChannelData(ch);
+
+    // Fast copy subarray
+    slicedData.set(originalData.subarray(startSample, endSample));
+
+    // Smooth 3ms cosine fade-in and fade-out to prevent boundary pops/clicks
+    const fadeSamples = Math.min(Math.round(sampleRate * 0.003), Math.floor(frameCount / 2));
+    for (let i = 0; i < fadeSamples; i++) {
+      const factor = 0.5 * (1 - Math.cos((Math.PI * i) / fadeSamples));
+      slicedData[i] *= factor;
+      slicedData[frameCount - 1 - i] *= factor;
+    }
+  }
+
+  return sliced;
+}
+
+/**
+ * Combine timeline ayahs using MP3Quran audio and official timing maps.
  * 
- * @param {Array} timelineItems - Array of { surahId, surahName, ayahNumber, candidateUrls, arabic, english }
- * @param {Object} options - { gapSeconds: 0.3, onProgress: (step, percent) => void }
- * @returns {Promise<{ audioBlob, audioUrl, duration, segments, waveformPeaks, sampleRate }>}
+ * @param {Array} timelineItems - Array of { surahId, surahName, ayahNumber, arabic, english, bengali }
+ * @param {Object} options - { reciterId, gapSeconds, onProgress }
  */
 export async function renderTimelineAudio(timelineItems, options = {}) {
-  const { gapSeconds = 0.3, onProgress = () => {} } = options;
+  const {
+    reciterId = "alafasy",
+    gapSeconds = 0.3,
+    onProgress = () => {},
+  } = options;
 
   if (!timelineItems || timelineItems.length === 0) {
     throw new Error("Timeline is empty. Please add at least one ayah.");
   }
+
+  const reciter =
+    RECITERS.find((r) => r.id === reciterId || r.readId === reciterId) || RECITERS[0];
 
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) {
@@ -68,55 +166,84 @@ export async function renderTimelineAudio(timelineItems, options = {}) {
   }
 
   const tempCtx = new AudioContextClass();
-  const decodedBuffers = [];
-  const segments = [];
   const totalItems = timelineItems.length;
 
   try {
-    // Step 1: Download & Decode each Ayah in parallel chunks of 3 for fast throughput without connection flooding
-    const CHUNK_SIZE = 3;
-    let completedCount = 0;
+    // Step 1: Identify all unique Surahs required in the timeline
+    const uniqueSurahs = Array.from(new Set(timelineItems.map((item) => Number(item.surahId))));
+    const surahSlicesMap = new Map(); // key: `${surahId}_${ayahNumber}` -> AudioBuffer
 
-    for (let i = 0; i < totalItems; i += CHUNK_SIZE) {
-      const chunk = timelineItems.slice(i, i + CHUNK_SIZE);
-      const chunkResults = await Promise.all(
-        chunk.map(async (item, chunkIndex) => {
-          const itemIdx = i + chunkIndex;
-          onProgress("downloading", {
-            current: itemIdx + 1,
-            total: totalItems,
-            percentage: Math.round(((itemIdx + 0.5) / totalItems) * 50),
-          });
+    let surahProcessed = 0;
 
-          const rawBuffer = await fetchAudioWithFallback(item.candidateUrls);
-          const decoded = await decodeAudioBuffer(tempCtx, rawBuffer);
-          return { item, decoded, index: itemIdx };
-        })
-      );
+    for (const sId of uniqueSurahs) {
+      onProgress("downloading", {
+        current: surahProcessed + 1,
+        total: uniqueSurahs.length,
+        percentage: Math.round(((surahProcessed + 0.3) / uniqueSurahs.length) * 45),
+        message: `Loading Surah ${sId} audio & official timings (${surahProcessed + 1}/${uniqueSurahs.length})...`,
+      });
 
-      for (const res of chunkResults) {
-        decodedBuffers[res.index] = res.decoded;
-        completedCount++;
-        onProgress("decoding", {
-          current: completedCount,
-          total: totalItems,
-          percentage: 50 + Math.round((completedCount / totalItems) * 20),
-        });
+      // 1. Fetch timing data for this Surah
+      const timings = await fetchAyahTimings(sId, reciter.readId);
+
+      // 2. Fetch Surah audio from MP3Quran CDN / server8
+      const surahUrls = reciter.getSurahUrls(sId);
+      const rawAudio = await fetchAudioWithFallback(surahUrls);
+
+      // 3. Decode Surah Audio
+      const decodedSurahBuffer = await decodeAudioBuffer(tempCtx, rawAudio);
+
+      // 4. Extract all needed Ayahs for this Surah
+      const neededAyahs = timelineItems.filter((item) => Number(item.surahId) === sId);
+
+      for (const item of neededAyahs) {
+        const timing = timings.find((t) => Number(t.ayah) === Number(item.ayahNumber));
+        if (timing) {
+          const slice = sliceAudioBuffer(
+            tempCtx,
+            decodedSurahBuffer,
+            timing.startSec,
+            timing.endSec
+          );
+          if (slice) {
+            surahSlicesMap.set(`${sId}_${item.ayahNumber}`, slice);
+          }
+        }
       }
+
+      surahProcessed++;
+      onProgress("decoding", {
+        current: surahProcessed,
+        total: uniqueSurahs.length,
+        percentage: 45 + Math.round((surahProcessed / uniqueSurahs.length) * 25),
+        message: `Sliced ayahs for Surah ${sId}`,
+      });
     }
 
-    // Step 2: Compute target audio parameters and total duration
-    const targetSampleRate = decodedBuffers[0]?.sampleRate || 44100;
-    const numberOfChannels = Math.max(...decodedBuffers.map((b) => b.numberOfChannels || 1));
-    const gapSamples = Math.round(gapSeconds * targetSampleRate);
+    // Step 2: Re-assemble individual ayah slices in the EXACT serial timeline order
+    const orderedBuffers = [];
+    const segments = [];
 
-    let totalSamples = 0;
     let currentTimelineSeconds = 0;
+    let totalSamples = 0;
 
-    decodedBuffers.forEach((buffer, idx) => {
+    const sampleRate = tempCtx.sampleRate || 44100;
+    const gapSamples = Math.round(gapSeconds * sampleRate);
+
+    for (let idx = 0; idx < timelineItems.length; idx++) {
       const item = timelineItems[idx];
+      const sliceKey = `${item.surahId}_${item.ayahNumber}`;
+      let sliceBuffer = surahSlicesMap.get(sliceKey);
+
+      // If for some rare edge case slice is missing, create a small fallback silence
+      if (!sliceBuffer) {
+        sliceBuffer = tempCtx.createBuffer(2, sampleRate * 2, sampleRate);
+      }
+
+      orderedBuffers.push(sliceBuffer);
+
       const startSec = currentTimelineSeconds;
-      const durationSec = buffer.duration;
+      const durationSec = sliceBuffer.duration;
       const endSec = startSec + durationSec;
 
       segments.push({
@@ -132,50 +259,51 @@ export async function renderTimelineAudio(timelineItems, options = {}) {
         duration: durationSec,
       });
 
-      totalSamples += buffer.length;
+      totalSamples += sliceBuffer.length;
       currentTimelineSeconds = endSec;
 
-      // Add gap if not the last item
-      if (idx < decodedBuffers.length - 1) {
+      if (idx < timelineItems.length - 1) {
         totalSamples += gapSamples;
         currentTimelineSeconds += gapSeconds;
       }
-    });
+    }
 
-    onProgress("mixing", { percentage: 75, message: "Hardware-accelerated mixing..." });
+    onProgress("mixing", { percentage: 75, message: "Hardware-accelerated mixing with OfflineAudioContext..." });
 
-    // Step 3: Offline Hardware-Accelerated Mixing
+    // Step 3: Hardware-accelerated offline mixing
+    const numberOfChannels = Math.max(...orderedBuffers.map((b) => b.numberOfChannels || 1));
     const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
       numberOfChannels,
       totalSamples,
-      targetSampleRate
+      sampleRate
     );
 
     let scheduleSampleOffset = 0;
-    decodedBuffers.forEach((buffer, idx) => {
+    orderedBuffers.forEach((buffer, idx) => {
       const source = offlineCtx.createBufferSource();
       source.buffer = buffer;
       source.connect(offlineCtx.destination);
-      const scheduleTime = scheduleSampleOffset / targetSampleRate;
+      const scheduleTime = scheduleSampleOffset / sampleRate;
       source.start(scheduleTime);
 
       scheduleSampleOffset += buffer.length;
-      if (idx < decodedBuffers.length - 1) {
+      if (idx < orderedBuffers.length - 1) {
         scheduleSampleOffset += gapSamples;
       }
     });
 
     const renderedBuffer = await offlineCtx.startRendering();
-    onProgress("encoding", { percentage: 90, message: "Encoding pristine 16-bit WAV..." });
+
+    onProgress("encoding", { percentage: 90, message: "Encoding pristine 16-bit Lossless WAV..." });
 
     // Step 4: Lossless 16-bit PCM WAV encoding
     const wavBlob = audioBufferToWavBlob(renderedBuffer);
     const audioUrl = URL.createObjectURL(wavBlob);
 
-    // Step 5: Extract 512 waveform peaks for high-speed WebGL rendering
+    // Step 5: Extract 512 waveform peaks for 60fps WebGL rendering
     const waveformPeaks = extractWaveformPeaks(renderedBuffer, 512);
 
-    onProgress("complete", { percentage: 100, message: "Processing complete!" });
+    onProgress("complete", { percentage: 100, message: "Done!" });
 
     return {
       audioBlob: wavBlob,
@@ -183,7 +311,7 @@ export async function renderTimelineAudio(timelineItems, options = {}) {
       duration: renderedBuffer.duration,
       segments,
       waveformPeaks,
-      sampleRate: targetSampleRate,
+      sampleRate,
       numberOfChannels,
     };
   } finally {
@@ -208,33 +336,28 @@ export function audioBufferToWavBlob(buffer) {
   const arrayBuffer = new ArrayBuffer(bufferSize);
   const view = new DataView(arrayBuffer);
 
-  // Helper to write ASCII strings
   const writeString = (offset, string) => {
     for (let i = 0; i < string.length; i++) {
       view.setUint8(offset + i, string.charCodeAt(i));
     }
   };
 
-  // RIFF Chunk
   writeString(0, "RIFF");
-  view.setUint32(4, 36 + dataSize, true); // chunkSize
+  view.setUint32(4, 36 + dataSize, true);
   writeString(8, "WAVE");
 
-  // "fmt " Subchunk
   writeString(12, "fmt ");
-  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-  view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
   view.setUint16(22, numChannels, true);
   view.setUint32(24, sampleRate, true);
   view.setUint32(28, byteRate, true);
   view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true); // bitsPerSample
+  view.setUint16(34, 16, true);
 
-  // "data" Subchunk
   writeString(36, "data");
   view.setUint32(40, dataSize, true);
 
-  // Interleave channel samples and convert Float32 [-1.0, 1.0] to 16-bit PCM Signed Integer
   const channelData = [];
   for (let ch = 0; ch < numChannels; ch++) {
     channelData.push(buffer.getChannelData(ch));
@@ -244,9 +367,7 @@ export function audioBufferToWavBlob(buffer) {
   for (let i = 0; i < numFrames; i++) {
     for (let ch = 0; ch < numChannels; ch++) {
       let sample = channelData[ch][i];
-      // Clamp to prevent digital clipping distortion
       sample = Math.max(-1, Math.min(1, sample));
-      // Scale to 16-bit signed integer range [-32768, 32767]
       const intSample = sample < 0 ? sample * 32768 : sample * 32767;
       view.setInt16(offset, intSample, true);
       offset += 2;

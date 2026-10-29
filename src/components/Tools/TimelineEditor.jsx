@@ -121,7 +121,7 @@ export default function TimelineEditor({
           arabic: verse.arabic,
           english: verse.english,
           bengali: verse.bengali || "",
-          candidateUrls: reciter.getUrl(selectedSurahId, ayahNum),
+          candidateUrls: reciter.getSurahUrls ? reciter.getSurahUrls(selectedSurahId) : [],
         };
       });
 
@@ -450,10 +450,11 @@ export default function TimelineEditor({
 
           {/* Quick Engine Specifications Info */}
           <div className="bg-background/40 p-3 rounded-xl border border-secondary/10 text-[11px] text-secondary space-y-1">
-            <div className="font-bold text-primary">⚙️ Studio Quality Guarantee:</div>
+            <div className="font-bold text-primary">⚙️ Studio Quality & Integrity Guarantee:</div>
+            <div>• Official MP3Quran.net & server8 public Islamic audio library</div>
+            <div>• Official Ayah Timing Database (Zero AI transcription cost or errors)</div>
             <div>• Lossless 16-bit 44.1kHz PCM Audio (Zero compression artifacts)</div>
-            <div>• OfflineAudioContext hardware-accelerated C++ rendering</div>
-            <div>• Millisecond-accurate dual-language SRT & WebVTT</div>
+            <div>• Millisecond-accurate Pure Raw SRTs (Arabic, English, Bengali)</div>
           </div>
         </div>
       </div>

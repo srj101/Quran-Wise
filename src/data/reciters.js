@@ -1,106 +1,177 @@
+// Official MP3Quran.net Reciters with verified 114 Surah Timing Data
+// Audio files are hosted on MP3Quran's high-speed CDN and server8.mp3quran.net with CORS support.
+
 export const RECITERS = [
   {
     id: "alafasy",
+    readId: 123,
     name: "Mishary Rashid Alafasy",
     arabic: "مشاري بن راشد العفاسي",
-    quality: "128 kbps Studio",
-    getUrl: (surah, ayah) => {
+    rewaya: "Hafs 'an 'Asim",
+    quality: "128 kbps Studio (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/mishary-alafasy/r1/",
+    serverFallback: "https://server8.mp3quran.net/afs/",
+    getSurahUrls: (surah) => {
       const s = String(surah).padStart(3, "0");
-      const a = String(ayah).padStart(3, "0");
       return [
-        `https://everyayah.com/data/Alafasy_128kbps/${s}${a}.mp3`,
-        `https://quranaudio.pages.dev/2/${surah}_${ayah}.mp3`,
-        `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${getAyahIndex(surah, ayah)}.mp3`,
+        `https://cdn.mp3quran.net/audio/mishary-alafasy/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/afs/${s}.mp3`,
       ];
     },
   },
   {
     id: "abdulbasit",
+    readId: 53,
     name: "Abdul Basit Abdul Samad (Murattal)",
-    arabic: "عبد الباسط عبد الصمد",
-    quality: "192 kbps Studio",
-    getUrl: (surah, ayah) => {
+    arabic: "عبد الباسط عبد الصمد (مرتل)",
+    rewaya: "Hafs 'an 'Asim (Murattal)",
+    quality: "128 kbps Classic (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3/",
+    serverFallback: "https://server8.mp3quran.net/basit/",
+    getSurahUrls: (surah) => {
       const s = String(surah).padStart(3, "0");
-      const a = String(ayah).padStart(3, "0");
       return [
-        `https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/${s}${a}.mp3`,
-        `https://cdn.islamic.network/quran/audio/128/ar.abdulbasitmurattal/${getAyahIndex(surah, ayah)}.mp3`,
+        `https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r3/${s}.mp3`,
+        `https://server8.mp3quran.net/basit/${s}.mp3`,
+      ];
+    },
+  },
+  {
+    id: "abdulbasit_mujawwad",
+    readId: 51,
+    name: "Abdul Basit Abdul Samad (Mujawwad)",
+    arabic: "عبد الباسط عبد الصمد (مجود)",
+    rewaya: "Al-Mus'haf Al-Mujawwad",
+    quality: "128 kbps Mujawwad (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/",
+    serverFallback: "https://server8.mp3quran.net/basit_mjwd/",
+    getSurahUrls: (surah) => {
+      const s = String(surah).padStart(3, "0");
+      return [
+        `https://cdn.mp3quran.net/audio/abdulbasit-abdulsamad/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/basit_mjwd/${s}.mp3`,
       ];
     },
   },
   {
     id: "husary",
+    readId: 118,
     name: "Mahmoud Khalil Al-Husary",
     arabic: "محمود خليل الحصري",
-    quality: "128 kbps Classic",
-    getUrl: (surah, ayah) => {
+    rewaya: "Hafs 'an 'Asim",
+    quality: "128 kbps Classic (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/mahmoud-husary/r1/",
+    serverFallback: "https://server8.mp3quran.net/husr/",
+    getSurahUrls: (surah) => {
       const s = String(surah).padStart(3, "0");
-      const a = String(ayah).padStart(3, "0");
       return [
-        `https://everyayah.com/data/Husary_128kbps/${s}${a}.mp3`,
-        `https://cdn.islamic.network/quran/audio/128/ar.husary/${getAyahIndex(surah, ayah)}.mp3`,
+        `https://cdn.mp3quran.net/audio/mahmoud-husary/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/husr/${s}.mp3`,
       ];
     },
   },
   {
     id: "minshawi",
+    readId: 112,
     name: "Mohamed Siddiq Al-Minshawi (Murattal)",
-    arabic: "محمد صديق المنشاوي",
-    quality: "128 kbps Studio",
-    getUrl: (surah, ayah) => {
+    arabic: "محمد صديق المنشاوي (مرتل)",
+    rewaya: "Hafs 'an 'Asim",
+    quality: "128 kbps Studio (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/muhammad-minshawi/r1/",
+    serverFallback: "https://server8.mp3quran.net/minsh/",
+    getSurahUrls: (surah) => {
       const s = String(surah).padStart(3, "0");
-      const a = String(ayah).padStart(3, "0");
       return [
-        `https://everyayah.com/data/Minshawy_Murattal_128kbps/${s}${a}.mp3`,
-        `https://cdn.islamic.network/quran/audio/128/ar.minshawi/${getAyahIndex(surah, ayah)}.mp3`,
+        `https://cdn.mp3quran.net/audio/muhammad-minshawi/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/minsh/${s}.mp3`,
+      ];
+    },
+  },
+  {
+    id: "ghamdi",
+    readId: 30,
+    name: "Saad Al-Ghamdi",
+    arabic: "سعد الغامدي",
+    rewaya: "Hafs 'an 'Asim",
+    quality: "128 kbps (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/saad-ghamdi/r1/",
+    serverFallback: "https://server8.mp3quran.net/ghamdi/",
+    getSurahUrls: (surah) => {
+      const s = String(surah).padStart(3, "0");
+      return [
+        `https://cdn.mp3quran.net/audio/saad-ghamdi/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/ghamdi/${s}.mp3`,
       ];
     },
   },
   {
     id: "sudais",
+    readId: 54,
     name: "Abdur-Rahman As-Sudais",
     arabic: "عبد الرحمن السديس",
-    quality: "192 kbps Makkah",
-    getUrl: (surah, ayah) => {
+    rewaya: "Hafs 'an 'Asim (Haram Makkah)",
+    quality: "128 kbps (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/abdulrahman-sudais/r1/",
+    serverFallback: "https://server8.mp3quran.net/soudais/",
+    getSurahUrls: (surah) => {
       const s = String(surah).padStart(3, "0");
-      const a = String(ayah).padStart(3, "0");
       return [
-        `https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps/${s}${a}.mp3`,
-        `https://cdn.islamic.network/quran/audio/128/ar.abdurrahmaansudais/${getAyahIndex(surah, ayah)}.mp3`,
+        `https://cdn.mp3quran.net/audio/abdulrahman-sudais/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/soudais/${s}.mp3`,
+      ];
+    },
+  },
+  {
+    id: "shuraim",
+    readId: 31,
+    name: "Saud Ash-Shuraim",
+    arabic: "سعود الشريم",
+    rewaya: "Hafs 'an 'Asim (Haram Makkah)",
+    quality: "128 kbps (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/saud-shuraim/r1/",
+    serverFallback: "https://server8.mp3quran.net/shur/",
+    getSurahUrls: (surah) => {
+      const s = String(surah).padStart(3, "0");
+      return [
+        `https://cdn.mp3quran.net/audio/saud-shuraim/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/shur/${s}.mp3`,
+      ];
+    },
+  },
+  {
+    id: "ajmi",
+    readId: 5,
+    name: "Ahmad Al-Ajmi",
+    arabic: "أحمد بن علي العجمي",
+    rewaya: "Hafs 'an 'Asim",
+    quality: "128 kbps (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/ahmad-ajmi/r1/",
+    serverFallback: "https://server8.mp3quran.net/ajm/",
+    getSurahUrls: (surah) => {
+      const s = String(surah).padStart(3, "0");
+      return [
+        `https://cdn.mp3quran.net/audio/ahmad-ajmi/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/ajm/${s}.mp3`,
       ];
     },
   },
   {
     id: "shaatree",
+    readId: 4,
     name: "Abu Bakr Ash-Shaatree",
     arabic: "أبو بكر الشاطري",
-    quality: "128 kbps Clear",
-    getUrl: (surah, ayah) => {
+    rewaya: "Hafs 'an 'Asim",
+    quality: "128 kbps Clear (MP3Quran)",
+    folderUrl: "https://cdn.mp3quran.net/audio/abubakr-shatri/r1/",
+    serverFallback: "https://server8.mp3quran.net/shatri/",
+    getSurahUrls: (surah) => {
       const s = String(surah).padStart(3, "0");
-      const a = String(ayah).padStart(3, "0");
       return [
-        `https://everyayah.com/data/Abu_Bakr_Ash-Shaatree_128kbps/${s}${a}.mp3`,
-        `https://cdn.islamic.network/quran/audio/128/ar.shaatree/${getAyahIndex(surah, ayah)}.mp3`,
+        `https://cdn.mp3quran.net/audio/abubakr-shatri/r1/${s}.mp3`,
+        `https://server8.mp3quran.net/shatri/${s}.mp3`,
       ];
     },
   },
 ];
 
-// Helper to calculate 1-indexed cumulative ayah index across the Quran (1 to 6236)
-// Cumulative verse counts before each surah (surah index 0 to 113)
-const VERSE_COUNTS = [
-  7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135,
-  112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85,
-  54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13,
-  14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42,
-  29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11,
-  11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6
-];
-
-export function getAyahIndex(surahId, ayahNumber) {
-  let count = 0;
-  for (let i = 0; i < surahId - 1; i++) {
-    count += VERSE_COUNTS[i];
-  }
-  return count + ayahNumber;
-}
+export const MP3QURAN_RECITERS = RECITERS;

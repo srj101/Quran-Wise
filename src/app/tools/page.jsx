@@ -57,6 +57,7 @@ export default function ToolsPage() {
 
     try {
       const result = await renderTimelineAudio(timeline, {
+        reciterId: selectedReciter,
         gapSeconds,
         onProgress: (step, data) => {
           setProgressInfo({
@@ -127,6 +128,7 @@ export default function ToolsPage() {
 
     try {
       const result = await renderTimelineAudio(job.timeline, {
+        reciterId: job.reciterId,
         gapSeconds: job.gapSeconds,
         onProgress: (step, data) => {
           setBatchJobs((prev) =>

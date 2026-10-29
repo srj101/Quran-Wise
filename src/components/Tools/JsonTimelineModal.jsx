@@ -234,7 +234,7 @@ export default function JsonTimelineModal({
             arabic: verse.arabic,
             english: verse.english,
             bengali: verse.bengali || "",
-            candidateUrls: reciterObj.getUrl(seg.surahNum, ayah),
+            candidateUrls: reciterObj.getSurahUrls ? reciterObj.getSurahUrls(seg.surahNum) : [],
           });
         }
       }
@@ -285,7 +285,7 @@ export default function JsonTimelineModal({
             arabic: verse.arabic,
             english: verse.english,
             bengali: verse.bengali || "",
-            candidateUrls: reciterObj.getUrl(seg.surahNum, ayah),
+            candidateUrls: reciterObj.getSurahUrls ? reciterObj.getSurahUrls(seg.surahNum) : [],
           });
         }
       }
