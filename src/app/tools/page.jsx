@@ -4,10 +4,12 @@ import React, { useState, useEffect } from "react";
 import TimelineEditor from "@/components/Tools/TimelineEditor";
 import StudioPlayer from "@/components/Tools/StudioPlayer";
 import BatchQueue from "@/components/Tools/BatchQueue";
+import ZikrRepeaterStudio from "@/components/Tools/ZikrRepeater/ZikrRepeaterStudio";
 import { RECITERS } from "@/data/reciters";
 import { renderTimelineAudio } from "@/lib/audioEngine";
 
 export default function ToolsPage() {
+  const [activeTool, setActiveTool] = useState("quran"); // 'quran' | 'zikr'
   const [activeTab, setActiveTab] = useState("builder"); // 'builder' | 'player' | 'batch'
   const [timeline, setTimeline] = useState([]);
   const [selectedReciter, setSelectedReciter] = useState("alafasy");
@@ -212,70 +214,108 @@ export default function ToolsPage() {
         </div>
       )}
 
-      {/* Hero / Studio Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/15 text-secondary text-xs font-bold tracking-wide uppercase">
-          <span>Quran Studio & Audio Lab</span>
-          <span>•</span>
-          <span>Sample-Accurate SRT</span>
-        </div>
-        <h1 className="text-3xl md:text-5xl font-black text-primary tracking-tight">
-          Quran Audio & Subtitles Studio
-        </h1>
-        <p className="text-secondary/80 max-w-2xl mx-auto text-sm md:text-base">
-          Assemble custom sequences of ayahs from any Surahs, preview them on a serially organized
-          timeline, and generate lossless audio with millisecond-exact Arabic & English subtitles.
-        </p>
-      </div>
-
-      {/* Main Navigation Tabs */}
+      {/* Top Studio Switcher */}
       <div className="flex justify-center">
-        <div className="inline-flex p-1.5 rounded-2xl bg-white shadow-md border border-secondary/15 gap-1 text-xs md:text-sm">
+        <div className="inline-flex p-1.5 rounded-3xl bg-white/80 backdrop-blur-sm border border-secondary/20 shadow-md gap-1.5 text-xs md:text-sm">
           <button
-            onClick={() => setActiveTab("builder")}
-            className={`px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${
-              activeTab === "builder"
-                ? "bg-primary text-background shadow-sm"
+            type="button"
+            onClick={() => setActiveTool("quran")}
+            className={`px-5 py-2.5 rounded-2xl font-bold transition flex items-center gap-2 ${
+              activeTool === "quran"
+                ? "bg-primary text-background shadow-md"
                 : "text-secondary hover:text-primary hover:bg-background/40"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            Timeline Studio ({timeline.length})
+            <span>📖</span>
+            <span>Quran Ayah Studio</span>
           </button>
 
           <button
-            onClick={() => setActiveTab("player")}
-            className={`px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${
-              activeTab === "player"
-                ? "bg-primary text-background shadow-sm"
+            type="button"
+            onClick={() => setActiveTool("zikr")}
+            className={`px-5 py-2.5 rounded-2xl font-bold transition flex items-center gap-2 ${
+              activeTool === "zikr"
+                ? "bg-primary text-background shadow-md"
                 : "text-secondary hover:text-primary hover:bg-background/40"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Studio Player & Subtitles
-            {activeResult && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
-          </button>
-
-          <button
-            onClick={() => setActiveTab("batch")}
-            className={`px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${
-              activeTab === "batch"
-                ? "bg-primary text-background shadow-sm"
-                : "text-secondary hover:text-primary hover:bg-background/40"
-            }`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
-            </svg>
-            Batch Queue ({batchJobs.length})
+            <span>📿</span>
+            <span>Custom Audio & Zikr Repeater</span>
+            <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
+              Studio
+            </span>
           </button>
         </div>
       </div>
+
+      {activeTool === "zikr" ? (
+        <ZikrRepeaterStudio />
+      ) : (
+        <>
+          {/* Hero / Studio Header */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/15 text-secondary text-xs font-bold tracking-wide uppercase">
+              <span>Quran Studio & Audio Lab</span>
+              <span>•</span>
+              <span>Sample-Accurate SRT</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black text-primary tracking-tight">
+              Quran Audio & Subtitles Studio
+            </h1>
+            <p className="text-secondary/80 max-w-2xl mx-auto text-sm md:text-base">
+              Assemble custom sequences of ayahs from any Surahs, preview them on a serially organized
+              timeline, and generate lossless audio with millisecond-exact Arabic & English subtitles.
+            </p>
+          </div>
+
+          {/* Main Navigation Tabs */}
+          <div className="flex justify-center">
+            <div className="inline-flex p-1.5 rounded-2xl bg-white shadow-md border border-secondary/15 gap-1 text-xs md:text-sm">
+              <button
+                onClick={() => setActiveTab("builder")}
+                className={`px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${
+                  activeTab === "builder"
+                    ? "bg-primary text-background shadow-sm"
+                    : "text-secondary hover:text-primary hover:bg-background/40"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Timeline Studio ({timeline.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab("player")}
+                className={`px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${
+                  activeTab === "player"
+                    ? "bg-primary text-background shadow-sm"
+                    : "text-secondary hover:text-primary hover:bg-background/40"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Studio Player & Subtitles
+                {activeResult && <span className="w-2 h-2 rounded-full bg-emerald-400" />}
+              </button>
+
+              <button
+                onClick={() => setActiveTab("batch")}
+                className={`px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 ${
+                  activeTab === "batch"
+                    ? "bg-primary text-background shadow-sm"
+                    : "text-secondary hover:text-primary hover:bg-background/40"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+                </svg>
+                Batch Queue ({batchJobs.length})
+              </button>
+            </div>
+          </div>
 
       {/* Global Processing Modal / Overlay when generating */}
       {isProcessing && (
@@ -396,6 +436,8 @@ export default function ToolsPage() {
           isBatchRunning={isBatchRunning}
           onOpenInPlayer={handleOpenInPlayer}
         />
+      )}
+        </>
       )}
     </div>
   );
